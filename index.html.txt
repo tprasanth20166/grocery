@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grocery">
+<title>Grocery Manager</title>
+<style>
+
+:root {
+–bg: #f7f6f2; –card: #ffffff; –primary: #1b4332; –primary-mid: #2d6a4f;
+–primary-light: #d8f3dc; –accent: #f4a261; –text: #1a1a1a; –text-muted: #999;
+–border: #e8e6df; –red: #e63946; –red-light: #fff0f0;
+–shadow: 0 2px 16px rgba(0,0,0,0.07); –shadow-sm: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+font-family:-apple-system,sans-serif;
+background: var(–bg);
+color: var(–text);
+min-height: 100vh;
+max-width: 480px;
+margin: 0 auto;
+padding-bottom: 100px;
+}
+
+/* ── HEADER ── */
+.app-header {
+background: var(–primary);
+padding: 52px 20px 0;
+color: white;
+position: sticky;
+top: 0;
+z-index: 200;
+overflow: hidden;
+}
+.app-header::before { content:’’; position:absolute; top:-40px; right:-40px; width:160px; height:160px; border-radius:50%; background:rgba(255,255,255,0.05); }
+
+.header-row { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1; padding-bottom:14px; }
+.header-left h1 { font-family:‘Georgia’,serif; font-size:22px; font-weight:700; line-height:1.1; }
+.header-left p { font-size:11px; opacity:0.6; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px; }
+.header-right { display:flex; align-items:center; gap:8px; }
+.list-name-badge {
+background: rgba(255,255,255,0.15);
+border: 1px solid rgba(255,255,255,0.25);
+color: white;
+border-radius: 20px;
+font-size: 13px;
+padding: 5px 12px;
+font-weight: 500;
+cursor: pointer;
+display: flex; align-items: center; gap: 5px;
+}
+.lists-btn {
+background: var(–accent);
+border: none; color: white;
+border-radius: 10px; padding: 7px 12px;
+font-family:-apple-system,sans-serif; font-size:12px; font-weight:600;
+cursor:pointer;
+}
+
+/* list switcher tabs */
+.list-tabs {
+display: flex;
+gap: 6px;
+padding: 0 0 14px;
+overflow-x: auto;
+scrollbar-width: none;
+position: relative; z-index:1;
+}
+.list-tabs::-webkit-scrollbar { display:none; }
+.list-tab {
+flex-shrink: 0;
+padding: 6px 14px;
+border-radius: 20px;
+border: 1.5px solid rgba(255,255,255,0.25);
+background: transparent;
+color: rgba(255,255,255,0.65);
+font-family:-apple-system,sans-serif; font-size:13px; font-weight:500;
+cursor: pointer; transition: all 0.2s;
+white-space: nowrap;
+}
+.list-tab.active { background: white; color: var(–primary); border-color: white; font-weight:600; }
+.list-tab-add {
+flex-shrink: 0;
+padding: 6px 14px;
+border-radius: 20px;
+border: 1.5px dashed rgba(255,255,255,0.4);
+background: transparent;
+color: rgba(255,255,255,0.5);
+font-family:-apple-system,sans-serif; font-size:13px;
+cursor: pointer;
+}
+
+/* ── STICKY ADD BAR ── */
+.sticky-add {
+position: sticky;
+top: 0;
+z-index: 100;
+background: var(–primary);
+padding: 10px 16px 12px;
+box-shadow: 0 4px 16px rgba(27,67,50,0.2);
+}
+.sticky-add-row { display:flex; gap:8px; align-items:center; }
+.sticky-add input {
+flex: 1;
+border: none;
+border-radius: 12px;
+padding: 11px 14px;
+font-family:-apple-system,sans-serif; font-size:15px;
+outline: none;
+background: rgba(255,255,255,0.95);
+color: var(–text);
+}
+.sticky-add input::placeholder { color: #aaa; }
+.sticky-add .btn-add {
+background: var(–accent);
+color: white; border: none;
+border-radius: 12px; padding: 11px 18px;
+font-family:-apple-system,sans-serif; font-size:15px; font-weight:600;
+cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.sticky-add .btn-add:active { opacity:0.85; transform:scale(0.97); }
+
+/* last added pill */
+.last-added {
+margin-top: 7px;
+font-size: 12px;
+color: rgba(255,255,255,0.7);
+display: flex; align-items: center; gap: 5px;
+min-height: 18px;
+}
+.last-added span { background: rgba(255,255,255,0.15); border-radius: 10px; padding: 2px 8px; font-weight:500; color: white; }
+
+/* ── CONTENT ── */
+.content { padding: 14px 16px; }
+
+/* tabs inside content */
+.view-tabs { display:flex; background: var(–card); border-radius:14px; padding:4px; gap:4px; margin-bottom:16px; box-shadow:var(–shadow-sm); border:1px solid var(–border); }
+.view-tab { flex:1; padding:9px; border:none; background:transparent; color:var(–text-muted); font-family:-apple-system,sans-serif; font-size:13px; font-weight:500; border-radius:10px; cursor:pointer; transition:all 0.2s; }
+.view-tab.active { background:var(–primary); color:white; font-weight:600; }
+.tab-count { display:inline-block; background:var(–accent); color:white; border-radius:20px; font-size:11px; padding:1px 6px; margin-left:3px; font-weight:600; }
+
+/* transfer box */
+.transfer-box { background:var(–card); border-radius:16px; padding:14px; box-shadow:var(–shadow-sm); margin-bottom:14px; border:1px solid var(–border); }
+.transfer-title { font-size:12px; font-weight:600; color:var(–primary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; }
+.transfer-btns { display:flex; gap:8px; }
+.btn-export { flex:1; padding:10px; background:var(–primary-light); color:var(–primary); border:1.5px solid var(–primary-mid); border-radius:10px; font-family:-apple-system,sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+.btn-import { flex:1; padding:10px; background:var(–accent); color:white; border:none; border-radius:10px; font-family:-apple-system,sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+.import-area { margin-top:10px; display:none; }
+.import-area.show { display:block; }
+.import-area textarea { width:100%; border:1.5px solid var(–border); border-radius:10px; padding:10px; font-family:-apple-system,sans-serif; font-size:13px; outline:none; background:var(–bg); color:var(–text); resize:none; height:100px; }
+.btn-import-confirm { width:100%; margin-top:8px; padding:11px; background:var(–primary); color:white; border:none; border-radius:10px; font-family:-apple-system,sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+
+.list-label { font-size:11px; font-weight:700; color:var(–text-muted); text-transform:uppercase; letter-spacing:1.5px; margin:16px 0 8px 2px; display:flex; align-items:center; gap:8px; }
+.list-label::after { content:’’; flex:1; height:1px; background:var(–border); }
+
+/* item card */
+.item-card { background:var(–card); border-radius:14px; padding:13px 14px; margin-bottom:2px; display:flex; align-items:center; gap:12px; box-shadow:var(–shadow-sm); border:1px solid var(–border); transition:transform 0.15s; }
+.item-card:active { transform:scale(0.985); }
+.item-card.selected { background:var(–primary-light); border-color:var(–primary-mid); }
+.item-card.just-added { border-color:var(–accent); box-shadow:0 0 0 2px rgba(244,162,97,0.3); }
+.checkbox { width:22px; height:22px; border-radius:7px; border:2px solid var(–border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; flex-shrink:0; font-size:13px; }
+.item-card.selected .checkbox { background:var(–primary); border-color:var(–primary); color:white; }
+.item-name { flex:1; font-size:15px; font-weight:400; }
+.item-card.selected .item-name { font-weight:500; color:var(–primary); }
+.new-tag { background:var(–accent); color:white; border-radius:6px; font-size:10px; font-weight:600; padding:2px 6px; margin-left:4px; }
+.item-qty { display:flex; align-items:center; gap:6px; }
+.qty-btn { width:26px; height:26px; border-radius:8px; border:1.5px solid var(–border); background:var(–bg); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(–text); transition:all 0.15s; line-height:1; }
+.qty-btn:active { background:var(–border); }
+.qty-num { font-size:14px; font-weight:600; min-width:18px; text-align:center; color:var(–primary); }
+.delete-btn { background:none; border:none; color:var(–text-muted); font-size:16px; cursor:pointer; padding:4px; border-radius:8px; transition:all 0.2s; line-height:1; }
+.delete-btn:active { background:var(–red-light); color:var(–red); }
+
+.insert-zone { display:flex; align-items:center; gap:8px; margin:2px 0; opacity:0; transition:opacity 0.2s; height:26px; }
+.insert-zone:hover { opacity:1; }
+.insert-line { flex:1; height:1px; background:var(–border); }
+.insert-btn { background:white; border:1.5px dashed var(–primary-mid); color:var(–primary-mid); border-radius:20px; font-size:11px; font-weight:600; padding:3px 10px; cursor:pointer; white-space:nowrap; font-family:-apple-system,sans-serif; }
+.inline-insert { background:var(–primary-light); border-radius:12px; padding:10px 12px; margin:4px 0; display:none; gap:8px; align-items:center; border:1.5px solid var(–primary-mid); }
+.inline-insert.show { display:flex; }
+.inline-insert input { flex:1; border:none; background:transparent; font-family:-apple-system,sans-serif; font-size:14px; outline:none; color:var(–text); }
+.insert-confirm { background:var(–primary); color:white; border:none; border-radius:8px; padding:6px 12px; font-family:-apple-system,sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+.insert-cancel { background:none; border:none; color:var(–text-muted); font-size:18px; cursor:pointer; padding:2px 4px; }
+
+.empty { text-align:center; padding:40px 20px; color:var(–text-muted); }
+.empty .icon { font-size:48px; margin-bottom:12px; }
+.empty p { font-size:15px; line-height:1.7; }
+
+/* order tab */
+.order-hero { background:var(–primary); border-radius:18px; padding:18px 20px; color:white; margin-bottom:14px; box-shadow:0 4px 20px rgba(27,67,50,0.2); position:relative; overflow:hidden; }
+.order-hero::before { content:’’; position:absolute; top:-30px; right:-30px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.06); }
+.order-hero h2 { font-family:‘Georgia’,serif; font-size:19px; font-weight:700; position:relative; z-index:1; }
+.order-hero span { font-size:12px; opacity:0.7; position:relative; z-index:1; display:block; margin-top:2px; }
+.order-item { background:var(–card); border-radius:14px; padding:13px 16px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(–shadow-sm); border:1px solid var(–border); }
+.order-item-left { display:flex; align-items:center; gap:10px; }
+.order-dot { width:8px; height:8px; border-radius:50%; background:var(–primary-mid); }
+.order-name { font-size:15px; }
+.order-qty { background:var(–primary-light); color:var(–primary); border-radius:8px; padding:4px 10px; font-size:13px; font-weight:700; }
+.share-btn { width:100%; padding:14px; background:var(–primary); color:white; border:none; border-radius:14px; font-family:-apple-system,sans-serif; font-size:15px; font-weight:600; cursor:pointer; margin-top:10px; transition:opacity 0.2s; }
+.share-btn:active { opacity:0.85; }
+.clear-btn { width:100%; padding:13px; background:var(–red-light); color:var(–red); border:none; border-radius:14px; font-family:-apple-system,sans-serif; font-size:14px; font-weight:500; cursor:pointer; margin-top:8px; }
+
+/* new list modal */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:500; display:none; align-items:flex-end; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal { background:var(–card); border-radius:24px 24px 0 0; padding:24px 20px 40px; width:100%; max-width:480px; }
+.modal h3 { font-family:‘Georgia’,serif; font-size:20px; margin-bottom:16px; }
+.modal input { width:100%; border:1.5px solid var(–border); border-radius:12px; padding:12px 14px; font-family:-apple-system,sans-serif; font-size:15px; outline:none; margin-bottom:12px; background:var(–bg); }
+.modal input:focus { border-color:var(–primary-mid); }
+.modal-btns { display:flex; gap:10px; }
+.btn-modal-cancel { flex:1; padding:13px; border:1.5px solid var(–border); background:transparent; border-radius:12px; font-family:-apple-system,sans-serif; font-size:15px; cursor:pointer; }
+.btn-modal-create { flex:1; padding:13px; background:var(–primary); color:white; border:none; border-radius:12px; font-family:-apple-system,sans-serif; font-size:15px; font-weight:600; cursor:pointer; }
+.delete-list-btn { width:100%; padding:12px; background:var(–red-light); color:var(–red); border:none; border-radius:12px; font-family:-apple-system,sans-serif; font-size:14px; cursor:pointer; margin-top:10px; display:none; }
+.delete-list-btn.show { display:block; }
+
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(80px); background:#1a1a1a; color:white; padding:12px 20px; border-radius:12px; font-size:14px; transition:transform 0.3s; z-index:999; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.2); }
+.toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+
+</head>
+<body>
+
+<!-- HEADER -->
+
+<div class="app-header">
+  <div class="header-row">
+    <div class="header-left">
+      <h1>🛒 Grocery</h1>
+      <p>உங்கள் வார order plan</p>
+    </div>
+    <div class="header-right">
+      <button class="lists-btn" onclick="openModal()">+ List</button>
+    </div>
+  </div>
+  <div class="list-tabs" id="list-tabs"></div>
+</div>
+
+<!-- STICKY ADD BAR -->
+
+<div class="sticky-add">
+  <div class="sticky-add-row">
+    <input type="text" id="new-item" placeholder="Item சேர்க்க type செய்யுங்க..." onkeydown="if(event.key==='Enter')addItem()">
+    <button class="btn-add" onclick="addItem()">+ சேர்</button>
+  </div>
+  <div class="last-added" id="last-added-bar">
+    <span style="opacity:0.5">கடைசியா சேர்த்தது இங்கே தெரியும்</span>
+  </div>
+</div>
+
+<!-- CONTENT -->
+
+<div class="content">
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="switchView('all')">எல்லாமே <span class="tab-count" id="all-count">0</span></button>
+    <button class="view-tab" onclick="switchView('order')">இந்த வாரம் <span class="tab-count" id="order-count">0</span></button>
+  </div>
+
+  <div id="view-all">
+    <div class="transfer-box">
+      <div class="transfer-title">📦 Import / Export</div>
+      <div class="transfer-btns">
+        <button class="btn-export" onclick="exportItems()">📤 Export</button>
+        <button class="btn-import" onclick="toggleImport()">📥 Import</button>
+      </div>
+      <div class="import-area" id="import-area">
+        <textarea id="import-text" placeholder="Export பண்ணிய text இங்கே paste பண்ணுங்கள்..."></textarea>
+        <button class="btn-import-confirm" onclick="importItems()">✅ Import பண்ணு</button>
+      </div>
+    </div>
+    <div id="items-list"></div>
+  </div>
+
+  <div id="view-order" style="display:none">
+    <div id="order-list"></div>
+  </div>
+</div>
+
+<!-- NEW LIST MODAL -->
+
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3>புதிய List உருவாக்கு</h3>
+    <input type="text" id="new-list-name" placeholder="Example: Pharmacy, Market, Supermarket..." onkeydown="if(event.key==='Enter')createList()">
+    <div class="modal-btns">
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-modal-create" onclick="createList()">உருவாக்கு</button>
+    </div>
+    <button class="delete-list-btn" id="delete-list-btn" onclick="deleteCurrentList()">🗑️ இந்த List-ஐ delete செய்</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── STATE ──
+  let data = JSON.parse(localStorage.getItem('gm_data') || 'null');
+  if (!data) {
+    data = { lists: [{ id: 'default', name: 'Main List', items: [] }], activeList: 'default' };
+  }
+  // migrate old items
+  if (!data.lists) { data = { lists: [{ id: 'default', name: 'Main List', items: data.items || [] }], activeList: 'default' }; }
+
+  let activeInsert = null;
+  let lastAddedId = null;
+
+  function save() { localStorage.setItem('gm_data', JSON.stringify(data)); }
+
+  function getActive() { return data.lists.find(l => l.id === data.activeList) || data.lists[0]; }
+  function getItems() { return getActive().items; }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── LIST MANAGEMENT ──
+  function openModal() {
+    document.getElementById('new-list-name').value = '';
+    document.getElementById('modal-overlay').classList.add('show');
+    const delBtn = document.getElementById('delete-list-btn');
+    delBtn.classList.toggle('show', data.lists.length > 1);
+    setTimeout(() => document.getElementById('new-list-name').focus(), 100);
+  }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+  function closeModalOutside(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+  function createList() {
+    const name = document.getElementById('new-list-name').value.trim();
+    if (!name) return;
+    const id = 'list_' + Date.now();
+    data.lists.push({ id, name, items: [] });
+    data.activeList = id;
+    save(); closeModal(); render();
+    showToast('✅ ' + name + ' list உருவாக்கப்பட்டது!');
+  }
+
+  function switchList(id) {
+    data.activeList = id;
+    lastAddedId = null;
+    activeInsert = null;
+    save(); render();
+  }
+
+  function deleteCurrentList() {
+    if (data.lists.length <= 1) { showToast('⚠️ கடைசி list delete செய்ய முடியாது!'); return; }
+    if (!confirm(getActive().name + ' list delete ஆகும். சரியா?')) return;
+    data.lists = data.lists.filter(l => l.id !== data.activeList);
+    data.activeList = data.lists[0].id;
+    save(); closeModal(); render();
+    showToast('🗑️ List delete ஆச்சு');
+  }
+
+  // ── ITEMS ──
+  function addItem() {
+    const input = document.getElementById('new-item');
+    const name = input.value.trim();
+    if (!name) return;
+    const items = getItems();
+    if (items.find(i => i.name.toLowerCase() === name.toLowerCase())) {
+      showToast('⚠️ இந்த item ஏற்கனவே இருக்கு!'); return;
+    }
+    const newItem = { id: Date.now(), name, selected: false, qty: 1 };
+    items.push(newItem);
+    lastAddedId = newItem.id;
+    save(); input.value = ''; render();
+
+    // update last added bar
+    document.getElementById('last-added-bar').innerHTML = '⬆️ கடைசியா சேர்த்தது: <span>' + name + '</span>';
+    showToast('✅ ' + name + ' சேர்க்கப்பட்டது!');
+
+    // scroll to bottom of list
+    setTimeout(() => {
+      const el = document.getElementById('item-' + newItem.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+
+  function insertAfter(afterId) {
+    activeInsert = afterId; render();
+    setTimeout(() => { const inp = document.getElementById('insert-input-' + afterId); if (inp) inp.focus(); }, 50);
+  }
+
+  function confirmInsert(afterId) {
+    const inp = document.getElementById('insert-input-' + afterId);
+    if (!inp) return;
+    const name = inp.value.trim();
+    if (!name) { cancelInsert(); return; }
+    const items = getItems();
+    if (items.find(i => i.name.toLowerCase() === name.toLowerCase())) { showToast('⚠️ இந்த item இருக்கு!'); return; }
+    const idx = items.findIndex(i => i.id === afterId);
+    const newItem = { id: Date.now(), name, selected: false, qty: 1 };
+    items.splice(idx + 1, 0, newItem);
+    lastAddedId = newItem.id;
+    activeInsert = null; save(); render();
+    showToast('✅ ' + name + ' இடையில் சேர்க்கப்பட்டது!');
+  }
+
+  function cancelInsert() { activeInsert = null; render(); }
+
+  function toggleItem(id) {
+    const item = getItems().find(i => i.id === id);
+    if (item) { item.selected = !item.selected; save(); render(); }
+  }
+
+  function deleteItem(id) {
+    getActive().items = getItems().filter(i => i.id !== id);
+    if (lastAddedId === id) lastAddedId = null;
+    save(); render(); showToast('🗑️ Item நீக்கப்பட்டது');
+  }
+
+  function changeQty(id, delta) {
+    const item = getItems().find(i => i.id === id);
+    if (item) { item.qty = Math.max(1, (item.qty || 1) + delta); save(); render(); }
+  }
+
+  function clearSelections() {
+    if (!confirm('இந்த வாரம் selections clear ஆகும். சரியா?')) return;
+    getItems().forEach(i => { i.selected = false; i.qty = 1; });
+    save(); render(); showToast('✅ வார list clear ஆச்சு!');
+  }
+
+  // ── IMPORT / EXPORT ──
+  function exportItems() {
+    const items = getItems();
+    if (!items.length) { showToast('⚠️ Items இல்ல!'); return; }
+    const text = JSON.stringify(items);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => showToast('📤 Export copy ஆச்சு!'));
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      showToast('📤 Export copy ஆச்சு!');
+    }
+  }
+
+  function toggleImport() {
+    const area = document.getElementById('import-area');
+    area.classList.toggle('show');
+    if (area.classList.contains('show')) document.getElementById('import-text').focus();
+  }
+
+  function importItems() {
+    const text = document.getElementById('import-text').value.trim();
+    if (!text) { showToast('⚠️ Text paste பண்ணுங்கள்!'); return; }
+    try {
+      const imported = JSON.parse(text);
+      if (!Array.isArray(imported)) throw new Error();
+      const items = getItems(); let added = 0;
+      imported.forEach(imp => {
+        if (imp.name && !items.find(i => i.name.toLowerCase() === imp.name.toLowerCase())) {
+          items.push({ id: Date.now() + Math.random(), name: imp.name, selected: false, qty: 1 });
+          added++;
+        }
+      });
+      save(); render();
+      document.getElementById('import-text').value = '';
+      document.getElementById('import-area').classList.remove('show');
+      showToast('✅ ' + added + ' items import ஆச்சு!');
+    } catch(e) { showToast('⚠️ தவறான data!'); }
+  }
+
+  // ── SHARE ──
+  function shareList() {
+    const selected = getItems().filter(i => i.selected);
+    if (!selected.length) { showToast('⚠️ எந்த item-உம் select ஆகல!'); return; }
+    const listName = getActive().name;
+    const text = '🛒 ' + listName + ' - இந்த வாரம்:\n\n' + selected.map(i => i.name + '-' + i.qty).join('\n');
+    if (navigator.share) { navigator.share({ title: listName, text }); }
+    else { navigator.clipboard.writeText(text).then(() => showToast('📋 List copy ஆச்சு!')); }
+  }
+
+  // ── VIEW SWITCH ──
+  function switchView(v) {
+    document.querySelectorAll('.view-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&v==='all')||(i===1&&v==='order')));
+    document.getElementById('view-all').style.display = v==='all' ? 'block' : 'none';
+    document.getElementById('view-order').style.display = v==='order' ? 'block' : 'none';
+  }
+
+  // ── ITEM HTML ──
+  function itemHTML(item) {
+    const isNew = item.id === lastAddedId;
+    return `<div id="item-${item.id}">
+      <div class="item-card ${item.selected ? 'selected' : ''} ${isNew ? 'just-added' : ''}" onclick="toggleItem(${item.id})">
+        <div class="checkbox">${item.selected ? '✓' : ''}</div>
+        <span class="item-name">${item.name}${isNew ? '<span class="new-tag">NEW</span>' : ''}</span>
+        ${item.selected ? `<div class="item-qty" onclick="event.stopPropagation()">
+          <div class="qty-btn" onclick="changeQty(${item.id},-1)">−</div>
+          <span class="qty-num">${item.qty}</span>
+          <div class="qty-btn" onclick="changeQty(${item.id},1)">+</div>
+        </div>` : ''}
+        <button class="delete-btn" onclick="event.stopPropagation();deleteItem(${item.id})">✕</button>
+      </div>
+      ${activeInsert === item.id ? `
+      <div class="inline-insert show">
+        <input id="insert-input-${item.id}" placeholder="இங்கே item type செய்யுங்க..." onkeydown="if(event.key==='Enter')confirmInsert(${item.id});if(event.key==='Escape')cancelInsert()">
+        <button class="insert-confirm" onclick="confirmInsert(${item.id})">சேர்</button>
+        <button class="insert-cancel" onclick="cancelInsert()">✕</button>
+      </div>` : `
+      <div class="insert-zone">
+        <div class="insert-line"></div>
+        <button class="insert-btn" onclick="insertAfter(${item.id})">+ இங்கே சேர்</button>
+        <div class="insert-line"></div>
+      </div>`}
+    </div>`;
+  }
+
+  // ── RENDER ──
+  function render() {
+    const items = getItems();
+    const selected = items.filter(i => i.selected);
+    const unselected = items.filter(i => !i.selected);
+
+    document.getElementById('all-count').textContent = items.length;
+    document.getElementById('order-count').textContent = selected.length;
+
+    // list tabs
+    const tabsEl = document.getElementById('list-tabs');
+    tabsEl.innerHTML = data.lists.map(l => `
+      <button class="list-tab ${l.id === data.activeList ? 'active' : ''}" onclick="switchList('${l.id}')">${l.name}</button>
+    `).join('') + `<button class="list-tab-add" onclick="openModal()">+ புதிய List</button>`;
+
+    // items list
+    const listEl = document.getElementById('items-list');
+    if (!items.length) {
+      listEl.innerHTML = `<div class="empty"><div class="icon">🛍️</div><p>Items இல்ல!<br>மேலே type செய்து சேர்க்கவும்</p></div>`;
+    } else {
+      let html = '';
+      if (selected.length) {
+        html += `<div class="list-label">✅ இந்த வாரம் (${selected.length})</div>`;
+        html += selected.map(itemHTML).join('');
+      }
+      if (unselected.length) {
+        html += `<div class="list-label">📦 எல்லா items (${unselected.length})</div>`;
+        html += unselected.map(itemHTML).join('');
+      }
+      listEl.innerHTML = html;
+    }
+
+    // order list
+    const orderEl = document.getElementById('order-list');
+    if (!selected.length) {
+      orderEl.innerHTML = `<div class="empty"><div class="icon">🗂️</div><p>எந்த item-உம் select ஆகல!<br>"எல்லாமே" tab-ல் போய் tick செய்யுங்க</p></div>`;
+    } else {
+      let html = `<div class="order-hero"><h2>${getActive().name}</h2><span>${selected.length} items ready ✓</span></div>`;
+      html += selected.map(item => `<div class="order-item">
+        <div class="order-item-left"><div class="order-dot"></div><span class="order-name">${item.name}</span></div>
+        <span class="order-qty">- ${item.qty}</span></div>`).join('');
+      html += `<button class="share-btn" onclick="shareList()">📤 WhatsApp-ல் Share செய்</button>`;
+      html += `<button class="clear-btn" onclick="clearSelections()">🔄 வாரம் முடிஞ்சது — Clear செய்</button>`;
+      orderEl.innerHTML = html;
+    }
+  }
+
+  render();
+</script>
+
+</body>
+</html>
